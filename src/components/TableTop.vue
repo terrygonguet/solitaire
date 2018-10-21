@@ -1,22 +1,12 @@
 <template>
   <div class="table-top">
-    <card-deck style="grid-area: deck"></card-deck>
-    <div style="grid-area: draw; justify-self: start" class="relative h-card">
-      <div class="card card-7S absolute ml-0"></div>
-      <div class="card card-KC absolute ml-6"></div>
-      <div class="card card-10H absolute ml-12"></div>
-    </div>
+    <card-deck style="grid-area: deck" @click="draw" :deck="deck"></card-deck>
+    <playing-card style="grid-area: draw; justify-self: start" :card="lastDrawn" v-if="drawn.length"></playing-card>
     <goal-pile style="grid-area: pileH"></goal-pile>
     <goal-pile style="grid-area: pileD"></goal-pile>
     <goal-pile style="grid-area: pileC"></goal-pile>
     <goal-pile style="grid-area: pileS"></goal-pile>
-    <card-column style="grid-area: col1"></card-column>
-    <card-column style="grid-area: col2"></card-column>
-    <card-column style="grid-area: col3"></card-column>
-    <card-column style="grid-area: col4"></card-column>
-    <card-column style="grid-area: col5"></card-column>
-    <card-column style="grid-area: col6"></card-column>
-    <card-column style="grid-area: col7"></card-column>
+    <card-column v-for="(col, i) in cols" :initial-cards="col" :key="i" :style="{ 'grid-area': 'col'+(i+1) }"></card-column>
   </div>
 </template>
 
@@ -36,11 +26,33 @@ export default {
     GoalPile
   },
   data () {
-    return { }
+    let data = {
+      deck: new cards.Deck(),
+      drawn: [],
+      cols: []
+    }
+    data.cols = Array(7).fill([]).map((c, i) => data.deck.draw(i + 1))
+    return data
+  },
+  computed: {
+    lastDrawn () {
+      return this.drawn.slice(-1)[0]
+    }
+  },
+  methods: {
+    draw () {
+      if (this.deck.cards.length) {
+        this.drawn.push(...this.deck.draw(1))
+        this.drawn.forEach(c => (c.hidden = false))
+      } else {
+        this.deck.putBack(this.drawn)
+        this.drawn = []
+      }
+    }
   },
   mounted () {
     document.querySelector(".table-top").style.minWidth = (8 * (cards.img.w / cards.img.cols)) + "px"
-  }
+  },
 }
 </script>
 

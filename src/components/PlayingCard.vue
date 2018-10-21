@@ -1,5 +1,5 @@
 <template>
-  <div class="card" :class="[{ 'card-back': hidden }, className]" @click="toggle"></div>
+  <div class="card" :class="[className]"></div>
 </template>
 
 <script>
@@ -9,18 +9,13 @@ export default {
   },
   data () {
     return {
-      hidden: this.card.hidden
+      hidden: this.card ? this.card.hidden : true
     }
   },
   computed: {
     className() {
-      return this.hidden ? "" : `card-${this.card.value}${this.card.suit}`
+      return this.hidden ? "card-back" : `card-${this.card.value}${this.card.suit}`
     }
   },
-  methods: {
-    toggle() {
-      this.hidden = !this.hidden
-    }
-  }
 }
 </script>

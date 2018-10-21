@@ -8,10 +8,6 @@ let img = {
   url: imgurl
 }
 
-function allCards () {
-  return suits.map(suit => values.map(value => ({ value, suit }))).reduce((acc, cur) => acc.concat(cur), [])
-}
-
 /**
  * Returns the css classes for the cards
  * @param {Bool} asElement if true, return a <style> element
@@ -28,11 +24,11 @@ function getCardsCSS (asElement = false) {
 .w-card {
   width: calc(1053px / ${img.cols});
 }
-h-card {
+.h-card {
   height: calc(587px / ${img.rows});
 }`
 
-  css += allCards().map((c, i) => `.card-${c.value}${c.suit} {
+  css += Card.allCards().map((c, i) => `.card-${c.value}${c.suit} {
     background-position: -${(i % values.length) * (img.w / img.cols)}px -${Math.floor(i / values.length) * (img.h / img.rows)}px;
   }`).reduce((acc, cur) => acc + cur, [])
 
@@ -46,8 +42,8 @@ h-card {
 class Deck {
 
   constructor (source, shuffled = true) {
-    this.cards = source || allCards()
-    if (this.shuffled) this.shuffle()
+    this.cards = source || Card.allCards()
+    if (shuffled) this.shuffle()
   }
 
   shuffle () {
@@ -58,6 +54,29 @@ class Deck {
     return this.cards.splice(0, number)
   }
 
+  putBack (cards, onTop = false, hide = true) {
+    if (onTop) this.cards.unshift(...cards)
+    else this.cards.push(...cards)
+    if (hide) cards.forEach(c => (c.hidden = true))
+  }
+
 }
 
-export { values, suits, getCardsCSS, allCards, Deck, img }
+class Card {
+
+  constructor (value, suit, hidden = true) {
+    this.value = value
+    this.suit = suit
+    this.hidden = hidden
+  }
+
+  get full () {
+    return this.value + this.suit
+  }
+
+  static allCards () {
+    return suits.map(suit => values.map(value => new Card(value, suit))).reduce((acc, cur) => acc.concat(cur), [])
+  }
+}
+
+export { values, suits, getCardsCSS, Deck, Card, img }
