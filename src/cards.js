@@ -4,6 +4,8 @@ let values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "1"]
 let suits = ["H", "D", "C", "S"]
 let img = {
   w: 1053, h: 587,
+  cardw: 1053 / 13,
+  cardh: 587 / 5,
   cols: 13, rows: 5,
   url: imgurl
 }
@@ -15,21 +17,21 @@ let img = {
 function getCardsCSS (asElement = false) {
   let css = `.card {
   background-image: url('${img.url}');
-  width: calc(1053px / ${img.cols});
-  height: calc(587px / ${img.rows});
+  width: ${img.cardw}px;
+  height: ${img.cardh}px;
 }
 .card-back {
-  background-position: 0px -${((img.rows - 1) / img.rows) * img.h}px;
+  background-position: 0px -${img.h - img.cardh}px;
 }
 .w-card {
-  width: calc(1053px / ${img.cols});
+  width: ${img.cardw}px;
 }
 .h-card {
-  height: calc(587px / ${img.rows});
+  height: ${img.cardh}px;
 }`
 
   css += Card.allCards().map((c, i) => `.card-${c.value}${c.suit} {
-    background-position: -${(i % values.length) * (img.w / img.cols)}px -${Math.floor(i / values.length) * (img.h / img.rows)}px;
+    background-position: -${(i % values.length) * img.cardw}px -${Math.floor(i / values.length) * img.cardh}px;
   }`).reduce((acc, cur) => acc + cur, [])
 
   if (asElement) {
@@ -70,12 +72,32 @@ class Card {
     this.hidden = hidden
   }
 
+  static allCards () {
+    return suits.map(suit => values.map(value => new Card(value, suit))).reduce((acc, cur) => acc.concat(cur), [])
+  }
+
+  static next (card) {
+    if (card.value === "1") return new Card("2", card.suit)
+    else {
+      let valueindex = values.indexOf(card.value)
+      return new Card(values[++valueindex], card.suit)
+    }
+  }
+
   get full () {
     return this.value + this.suit
   }
 
-  static allCards () {
-    return suits.map(suit => values.map(value => new Card(value, suit))).reduce((acc, cur) => acc.concat(cur), [])
+  get isRed () {
+    return ["H", "D"].includes(this.suit)
+  }
+
+  get isBlack () {
+    return !this.isRed
+  }
+
+  equals (other, includeHidden = false) {
+    return this.full === other.full && (this.hidden === other.hidden || !includeHidden)
   }
 }
 

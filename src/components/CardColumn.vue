@@ -1,6 +1,12 @@
 <template>
   <div class="relative w-card">
-    <playing-card v-for="(card, i) in cards" :key="card.full" :card="card" :style="{ 'margin-top': (i*1.8)+'rem' }" class="absolute"></playing-card>
+    <playing-card 
+      v-for="(card, i) in cards" 
+      :key="card.full" 
+      :card="card" 
+      :style="{ 'margin-top': (i*1.8)+'rem' }" 
+      class="absolute"
+      @click="$emit('click', $event)"></playing-card>
   </div>
 </template>
 
@@ -15,11 +21,9 @@ export default {
     PlayingCard
   },
   data() {
-    let data = {
+    return {
       cards: this.initialCards
     }
-    data.cards[data.cards.length - 1].hidden = false
-    return data
   }
 }
 </script>

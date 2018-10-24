@@ -1,6 +1,6 @@
 <template>
   <div :class="[classes, 'relative']" @click="$emit('click')">
-    <span class="absolute pin-x pin-b text-center p-2 text-black font-bold">{{ deck.cards.length }}</span>
+    <span class="absolute pin-x pin-b text-center p-2 text-black font-bold select-none">{{ deck.cards.length }}</span>
   </div>
 </template>
 

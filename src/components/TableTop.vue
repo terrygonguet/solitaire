@@ -1,12 +1,32 @@
 <template>
-  <div class="table-top">
-    <card-deck style="grid-area: deck" @click="draw" :deck="deck"></card-deck>
-    <playing-card style="grid-area: draw; justify-self: start" :card="lastDrawn" v-if="drawn.length"></playing-card>
-    <goal-pile style="grid-area: pileH"></goal-pile>
-    <goal-pile style="grid-area: pileD"></goal-pile>
-    <goal-pile style="grid-area: pileC"></goal-pile>
-    <goal-pile style="grid-area: pileS"></goal-pile>
-    <card-column v-for="(col, i) in cols" :initial-cards="col" :key="i" :style="{ 'grid-area': 'col'+(i+1) }"></card-column>
+  <div class="h-screen w-screen flex justify-center items-center flex-col overflow-hidden" @mousemove="handleMousemove">
+    <div class="table-top">
+      <card-deck 
+        style="grid-area: deck" 
+        @click="handleClick(null, 'deck')" 
+        :deck="deck"></card-deck>
+      <component
+        :is="drawn.length ? 'playing-card' : 'div'"
+        style="grid-area: draw; justify-self: start" 
+        :card="lastDrawn" 
+        :class="drawn.length ? '' : 'w-card h-card border-2 border-red border-dashed rounded-sm'"
+        @click="handleClick($event, 'draw')"></component>
+      <goal-pile
+        v-for="(suit, i) in suits"
+        :key="suit"
+        :style="{ 'grid-area': 'pile'+suit }"
+        @click="handleClick($event, 'pile', i)"
+        :cards="goalPiles[i]"></goal-pile>
+      <card-column 
+        v-for="(col, i) in cols" 
+        :key="i" 
+        :initial-cards="col" 
+        :style="{ 'grid-area': 'col'+(i+1) }"
+        @click="handleClick($event, 'column', i)"></card-column>
+    </div>
+    <card-column 
+      :style="{ position: 'absolute', top: selected.y+'px', left: selected.x+'px' }" 
+      :initial-cards="selected.cards"></card-column>
   </div>
 </template>
 
@@ -26,17 +46,30 @@ export default {
     GoalPile
   },
   data () {
-    let data = {
-      deck: new cards.Deck(),
+    let deck = new cards.Deck()
+    let cols = Array(7).fill().map((c, i) => deck.draw(i + 1))
+    cols.forEach(c => c[c.length - 1].hidden = false)
+    return {
+      deck,
+      cols,
       drawn: [],
-      cols: []
+      goalPiles: [[], [], [], []],
+      suits: cards.suits,
+      selected: {
+        cards: [],
+        x: 0,
+        y: 0,
+        source: null,
+        detail: null
+      }
     }
-    data.cols = Array(7).fill([]).map((c, i) => data.deck.draw(i + 1))
-    return data
   },
   computed: {
     lastDrawn () {
       return this.drawn.slice(-1)[0]
+    },
+    hasCardsSelected () {
+      return !!this.selected.cards.length
     }
   },
   methods: {
@@ -48,10 +81,46 @@ export default {
         this.deck.putBack(this.drawn)
         this.drawn = []
       }
+    },
+    handleClick (card, source, detail) {
+      console.log(card && card.full, source, detail);
+      switch (source) {
+        case 'deck':
+          if (!this.hasCardsSelected) {
+            this.draw()
+          }
+          break;
+        case 'draw':
+          if (!this.hasCardsSelected) {
+            this.selected.cards.push(this.drawn.pop())
+            this.selected.source = source
+          } else if (this.selected.source === source) {
+            this.drawn.push(this.selected.cards.pop())
+            this.selected.source = null
+          }
+          break;
+        case 'pile':
+          if (this.hasCardsSelected) {
+            this.goalPiles[detail].push(this.selected.cards.pop())
+            this.selected.source = null
+          }
+          break;
+        case 'column':
+          if (!card.hidden) {
+            this.selected.cards.push(this.cols[detail].pop())
+            this.selected.source = source
+          }
+          break;
+      }
+    },
+    handleMousemove (e) {
+      this.selected.x = e.x - cards.img.cardw / 2
+      this.selected.y = e.y + 15
     }
   },
   mounted () {
     document.querySelector(".table-top").style.minWidth = (8 * (cards.img.w / cards.img.cols)) + "px"
+    console.log(this)
   },
 }
 </script>
