@@ -7,6 +7,10 @@
       :style="{ 'margin-top': (i*1.8)+'rem' }" 
       class="absolute"
       @click="$emit('click', $event)"></playing-card>
+    <div
+      v-if="!cards.length"
+      class="w-card h-card"
+      @click="$emit('click')"></div>
   </div>
 </template>
 

@@ -84,6 +84,14 @@ class Card {
     }
   }
 
+  static previous (card) {
+    if (card.value === "2") return new Card("1", card.suit)
+    else {
+      let valueindex = values.indexOf(card.value)
+      return new Card(values[--valueindex], card.suit)
+    }
+  }
+
   get full () {
     return this.value + this.suit
   }

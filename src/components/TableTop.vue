@@ -25,7 +25,7 @@
         @click="handleClick($event, 'column', i)"></card-column>
     </div>
     <card-column 
-      :style="{ position: 'absolute', top: selected.y+'px', left: selected.x+'px' }" 
+      :style="{ position: 'absolute', top: selected.y+'px', left: selected.x+'px' }"
       :initial-cards="selected.cards"></card-column>
   </div>
 </template>
@@ -92,30 +92,61 @@ export default {
           break;
         case 'draw':
           if (!this.hasCardsSelected) {
-            this.selected.cards.push(this.drawn.pop())
-            this.selected.source = source
+            this.select(this.drawn.pop(), source)
           } else if (this.selected.source === source) {
-            this.drawn.push(this.selected.cards.pop())
-            this.selected.source = null
+            this.drawn.push(...this.unselect())
           }
           break;
         case 'pile':
-          if (this.hasCardsSelected) {
-            this.goalPiles[detail].push(this.selected.cards.pop())
-            this.selected.source = null
+          if (this.canPlaceOntoGoalPile(detail)) {
+            this.goalPiles[detail].push(...this.unselect())
           }
           break;
         case 'column':
-          if (!card.hidden) {
-            this.selected.cards.push(this.cols[detail].pop())
-            this.selected.source = source
+          if (this.canPlaceOntoColumn(detail)) {
+            this.cols[detail].push(...this.unselect())
+          } else if (!card.hidden && !this.hasCardsSelected) {
+            let cardPos = this.cols[detail].indexOf(card)
+            this.select(this.cols[detail].splice(cardPos), source, detail)
           }
           break;
       }
+      if (!this.hasCardsSelected) this.cols.forEach(c => c.length && (c[c.length - 1].hidden = false))
     },
     handleMousemove (e) {
       this.selected.x = e.x - cards.img.cardw / 2
       this.selected.y = e.y + 15
+    },
+    canPlaceOntoGoalPile(i) {
+      if (!this.hasCardsSelected) return false
+      if (this.selected.cards.length > 1) return false
+      let card = this.selected.cards[0]
+      if (card.suit !== this.suits[i]) return false
+      let pile = this.goalPiles[i]
+      if (!pile.length && card.value === "1") return true
+      let prevCard = pile[pile.length - 1]
+      return (cards.Card.next(prevCard).equals(card))
+    },
+    canPlaceOntoColumn(i) {
+      if (!this.hasCardsSelected) return false
+      if (this.selected.source === 'column' && this.selected.detail === i) return true
+      let firstSelected = this.selected.cards[0]
+      let col = this.cols[i]
+      if (firstSelected.value === "K") return (!col.length)
+      let lastOnCol = col[col.length - 1]
+      let previous = cards.Card.previous(lastOnCol)
+      return (previous.value === firstSelected.value && !previous.isRed === firstSelected.isRed)
+    },
+    select (cards, source, detail) {
+      if (!(cards instanceof Array)) cards = [cards]
+      this.selected.cards.push(...cards)
+      this.selected.source = source
+      this.selected.detail = detail
+    },
+    unselect () {
+      this.selected.source = null
+      this.selected.detail = null
+      return this.selected.cards.splice(0)
     }
   },
   mounted () {
