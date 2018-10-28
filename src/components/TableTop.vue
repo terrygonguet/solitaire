@@ -2,15 +2,28 @@
   <div class="h-screen w-screen flex justify-center items-center flex-col overflow-hidden" @mousemove="handleMousemove">
     <div class="table-top">
       <card-deck 
-        style="grid-area: deck" 
-        @click="handleClick(null, 'deck')" 
+        style="grid-area: deck"
+        @click="handleClick(null, 'deck')"
         :deck="deck"></card-deck>
-      <component
-        :is="drawn.length ? 'playing-card' : 'div'"
-        style="grid-area: draw; justify-self: start" 
-        :card="lastDrawn" 
-        :class="drawn.length ? '' : 'w-card h-card border-2 border-red border-dashed rounded-sm'"
-        @click="handleClick($event, 'draw')"></component>
+      <div 
+        style="grid-area: draw; justify-self: start"
+        :class="drawn.length ? 'relative' : 'w-card h-card border-2 border-red border-dashed rounded-sm'">
+        <playing-card
+          :card="lastDrawn[0]"
+          v-if="drawn.length"
+          class="absolute"
+          @click="handleClick($event, 'draw')"></playing-card>
+        <playing-card
+          :card="lastDrawn[1]"
+          v-if="drawn.length > 1"
+          class="absolute ml-6"
+          @click="handleClick($event, 'draw')"></playing-card>
+        <playing-card
+          :card="lastDrawn[2]"
+          v-if="drawn.length > 2"
+          class="absolute ml-12"
+          @click="handleClick($event, 'draw')"></playing-card>
+      </div>
       <goal-pile
         v-for="(suit, i) in suits"
         :key="suit"
@@ -18,13 +31,13 @@
         @click="handleClick($event, 'pile', i)"
         :cards="goalPiles[i]"></goal-pile>
       <card-column 
-        v-for="(col, i) in cols" 
-        :key="i" 
-        :initial-cards="col" 
+        v-for="(col, i) in cols"
+        :key="i"
+        :initial-cards="col"
         :style="{ 'grid-area': 'col'+(i+1) }"
         @click="handleClick($event, 'column', i)"></card-column>
     </div>
-    <card-column 
+    <card-column
       :style="{ position: 'absolute', top: selected.y+'px', left: selected.x+'px' }"
       :initial-cards="selected.cards"></card-column>
   </div>
@@ -66,7 +79,7 @@ export default {
   },
   computed: {
     lastDrawn () {
-      return this.drawn.slice(-1)[0]
+      return this.drawn.slice(-3)
     },
     hasCardsSelected () {
       return !!this.selected.cards.length
@@ -75,7 +88,7 @@ export default {
   methods: {
     draw () {
       if (this.deck.cards.length) {
-        this.drawn.push(...this.deck.draw(1))
+        this.drawn.push(...this.deck.draw(3))
         this.drawn.forEach(c => (c.hidden = false))
       } else {
         this.deck.putBack(this.drawn)
@@ -91,7 +104,7 @@ export default {
           }
           break;
         case 'draw':
-          if (!this.hasCardsSelected) {
+          if (!this.hasCardsSelected && this.drawn.length) {
             this.select(this.drawn.pop(), source)
           } else if (this.selected.source === source) {
             this.drawn.push(...this.unselect())
@@ -129,12 +142,15 @@ export default {
     },
     canPlaceOntoColumn(i) {
       if (!this.hasCardsSelected) return false
+      // you can put it back where you got it
       if (this.selected.source === 'column' && this.selected.detail === i) return true
       let firstSelected = this.selected.cards[0]
       let col = this.cols[i]
-      if (firstSelected.value === "K") return (!col.length)
+      // if the column is empty you can put anything
+      if (!col.length) return true
       let lastOnCol = col[col.length - 1]
       let previous = cards.Card.previous(lastOnCol)
+      // If the next card is 1 less value and oposite color
       return (previous.value === firstSelected.value && !previous.isRed === firstSelected.isRed)
     },
     select (cards, source, detail) {

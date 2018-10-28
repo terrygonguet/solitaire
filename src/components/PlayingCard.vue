@@ -1,5 +1,5 @@
 <template>
-  <div class="card" :class="[className]" @click="$emit('click', card)"></div>
+  <div :class="[className, 'card']" @click="$emit('click', card)"></div>
 </template>
 
 <script>
@@ -9,7 +9,7 @@ export default {
   },
   computed: {
     className() {
-      return this.card.hidden ? "card-back" : `card-${this.card.value}${this.card.suit}`
+      return (this.card && !this.card.hidden) ? `card-${this.card.value}${this.card.suit}` : "card-back"
     }
   },
 }
